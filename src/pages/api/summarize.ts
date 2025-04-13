@@ -19,6 +19,12 @@ interface VercelResponse {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Set CORS headers for all responses
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
+
   // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
     res.status(200).end();
@@ -36,7 +42,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (!apiKey) {
       console.error("OpenAI API key is missing");
-      return res.status(500).json({ error: 'OpenAI API key not configured on server' });
+      return res.status(500).json({ error: 'OpenAI API key not configured. Please set the OPENAI_API_KEY environment variable.' });
     }
 
     // Parse the request body
@@ -72,6 +78,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     console.log("Calling OpenAI API with email content length:", emailContent.length);
+    console.log("Using API key starting with:", apiKey.substring(0, 3) + "..." + apiKey.substring(apiKey.length - 3));
 
     // Call OpenAI API
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -96,6 +103,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.error("OpenAI API error:", errorText);
       
       let errorMessage = 'Failed to summarize email';
+      
       try {
         const errorData = JSON.parse(errorText);
         errorMessage = errorData.error?.message || errorMessage;
