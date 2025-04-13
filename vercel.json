@@ -1,0 +1,12 @@
+
+{
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "/api/:path*" }
+  ],
+  "functions": {
+    "api/summarize": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  }
+}
