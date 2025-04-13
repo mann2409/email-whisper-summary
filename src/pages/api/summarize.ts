@@ -1,12 +1,11 @@
 
-import type { NextRequest } from 'next/server';
 import { SummarizeRequest, SummarizeResponse } from '../../lib/types';
 import { OPENAI_MODEL } from '../../lib/config';
 
-export async function POST(req: NextRequest) {
+export async function POST(request: Request) {
   try {
     // Extract the API key from the Authorization header
-    const apiKey = req.headers.get('Authorization')?.replace('Bearer ', '');
+    const apiKey = request.headers.get('Authorization')?.replace('Bearer ', '');
 
     if (!apiKey) {
       return new Response(
@@ -16,7 +15,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Parse the request body
-    const { emailContent, options = {} } = await req.json() as SummarizeRequest;
+    const { emailContent, options = {} } = await request.json() as SummarizeRequest;
 
     if (!emailContent) {
       return new Response(
