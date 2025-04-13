@@ -1,8 +1,9 @@
 
+import { NextApiRequest, NextApiResponse } from 'next';
 import { SummarizeRequest, SummarizeResponse } from '../../lib/types';
 import { OPENAI_MODEL } from '../../lib/config';
 
-export default async function handler(req, res) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
     res.status(200).end();
@@ -15,10 +16,11 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Get API key from environment variable instead of request header
+    // Get API key from environment variable
     const apiKey = process.env.OPENAI_API_KEY;
 
     if (!apiKey) {
+      console.error("OpenAI API key is missing");
       return res.status(500).json({ error: 'OpenAI API key not configured on server' });
     }
 
@@ -54,6 +56,8 @@ export default async function handler(req, res) {
       systemPrompt += ' with a general focus.';
     }
 
+    console.log("Calling OpenAI API with email content length:", emailContent.length);
+
     // Call OpenAI API
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -73,13 +77,24 @@ export default async function handler(req, res) {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorText = await response.text();
+      console.error("OpenAI API error:", errorText);
+      
+      let errorMessage = 'Failed to summarize email';
+      try {
+        const errorData = JSON.parse(errorText);
+        errorMessage = errorData.error?.message || errorMessage;
+      } catch (e) {
+        errorMessage = errorText || errorMessage;
+      }
+      
       return res.status(response.status).json({ 
-        error: errorData.error?.message || 'Failed to summarize email' 
+        error: errorMessage
       });
     }
 
     const data = await response.json();
+    console.log("OpenAI API responded successfully");
     
     // Extract the summary from the OpenAI response
     const summary = data.choices[0].message.content;

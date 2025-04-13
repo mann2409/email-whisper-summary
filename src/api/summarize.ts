@@ -1,4 +1,4 @@
 
 import handler from "../pages/api/summarize";
 
-export default handler;
+export { handler as default };

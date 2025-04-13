@@ -6,6 +6,8 @@ export async function summarizeEmail(
   request: SummarizeRequest
 ): Promise<SummarizeResponse> {
   try {
+    console.log("Making API request to:", API_ENDPOINT);
+    
     const response = await fetch(API_ENDPOINT, {
       method: "POST",
       headers: {
@@ -14,8 +16,12 @@ export async function summarizeEmail(
       body: JSON.stringify(request),
     });
 
+    console.log("API response status:", response.status);
+
     if (!response.ok) {
       const errorText = await response.text();
+      console.error("API error response:", errorText);
+      
       let errorMessage = "Failed to summarize email";
       
       try {
@@ -29,7 +35,9 @@ export async function summarizeEmail(
       throw new Error(errorMessage);
     }
 
-    return await response.json();
+    const result = await response.json();
+    console.log("API response successful");
+    return result;
   } catch (error) {
     console.error("Error summarizing email:", error);
     return {
