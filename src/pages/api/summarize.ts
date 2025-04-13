@@ -1,161 +1,134 @@
 
-import { SummarizeRequest, SummarizeResponse } from "../../lib/types";
-import { OPENAI_MODEL } from "../../lib/config";
+import type { NextRequest } from 'next/server';
+import { SummarizeRequest, SummarizeResponse } from '../../lib/types';
+import { OPENAI_MODEL } from '../../lib/config';
 
-export async function POST(request: Request): Promise<Response> {
+export async function POST(req: NextRequest) {
   try {
-    // Parse the request
-    const data: SummarizeRequest = await request.json();
-    
-    if (!data.emailContent) {
-      return new Response(
-        JSON.stringify({ error: "Email content is required" }),
-        {
-          status: 400,
-          headers: {
-            "Content-Type": "application/json"
-          }
-        }
-      );
-    }
+    // Extract the API key from the Authorization header
+    const apiKey = req.headers.get('Authorization')?.replace('Bearer ', '');
 
-    const options = data.options || { length: "medium", focus: "general" };
-    
-    // Construct the prompt for OpenAI
-    let systemPrompt = "You are an AI assistant that summarizes emails into clear, concise points. ";
-    
-    if (options.focus === "action-items") {
-      systemPrompt += "Focus on extracting action items and next steps from the email.";
-    } else if (options.focus === "key-points") {
-      systemPrompt += "Focus on extracting the key points and important information from the email.";
-    } else {
-      systemPrompt += "Provide a general summary that captures the main message of the email.";
-    }
-
-    // Add length guidance
-    if (options.length === "short") {
-      systemPrompt += " Keep the summary very brief, 1-2 sentences maximum.";
-    } else if (options.length === "long") {
-      systemPrompt += " Provide a comprehensive summary with more details.";
-    } else {
-      systemPrompt += " Aim for a medium-length summary of 3-4 sentences.";
-    }
-
-    // OpenAI API request
-    const apiKey = process.env.OPENAI_API_KEY;
-    
     if (!apiKey) {
       return new Response(
-        JSON.stringify({ error: "OpenAI API key not configured" }),
-        {
-          status: 500,
-          headers: {
-            "Content-Type": "application/json"
-          }
-        }
+        JSON.stringify({ error: 'OpenAI API key is required' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
+    // Parse the request body
+    const { emailContent, options = {} } = await req.json() as SummarizeRequest;
+
+    if (!emailContent) {
+      return new Response(
+        JSON.stringify({ error: 'Email content is required' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Construct the prompt based on options
+    const length = options.length || 'medium';
+    const focus = options.focus || 'general';
+
+    // Create the system prompt based on options
+    let systemPrompt = `You are an AI email summarizer. Summarize the following email content`;
+    
+    // Adjust for length
+    if (length === 'short') {
+      systemPrompt += ' in 1-2 sentences';
+    } else if (length === 'medium') {
+      systemPrompt += ' in 3-4 sentences';
+    } else if (length === 'long') {
+      systemPrompt += ' with more detail';
+    }
+    
+    // Adjust for focus
+    if (focus === 'action-items') {
+      systemPrompt += ' with a focus on action items required. Include a list of action items at the end.';
+    } else if (focus === 'key-points') {
+      systemPrompt += ' with a focus on key points. Include a list of key points at the end.';
+    } else {
+      systemPrompt += ' with a general focus.';
+    }
+
+    // Call OpenAI API
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
         model: OPENAI_MODEL,
         messages: [
-          {
-            role: "system",
-            content: systemPrompt,
-          },
-          {
-            role: "user",
-            content: `Please summarize this email:\n\n${data.emailContent}`,
-          },
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: emailContent }
         ],
         temperature: 0.3,
-        max_tokens: 1000,
-      }),
+        max_tokens: 500
+      })
     });
 
-    if (!openaiResponse.ok) {
-      const errorData = await openaiResponse.json();
+    if (!response.ok) {
+      const errorData = await response.json();
       return new Response(
         JSON.stringify({ 
-          error: `OpenAI API error: ${errorData.error?.message || "Unknown error"}` 
+          error: errorData.error?.message || 'Failed to summarize email' 
         }),
-        {
-          status: openaiResponse.status,
-          headers: {
-            "Content-Type": "application/json"
-          }
-        }
+        { status: response.status, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    const openaiData = await openaiResponse.json();
-    const summary = openaiData.choices[0].message.content.trim();
+    const data = await response.json();
     
-    // Extract key points and action items if requested
-    let keyPoints: string[] | undefined;
-    let actionItems: string[] | undefined;
-
-    if (options.focus === "key-points" || options.focus === "general") {
-      // Simple extraction of bullet points from the summary
-      keyPoints = summary
-        .split(/\n+/)
-        .filter(line => line.trim().startsWith('•') || line.trim().startsWith('-') || line.trim().startsWith('*'))
-        .map(line => line.replace(/^[•\-\*]\s*/, '').trim());
-    }
-
-    if (options.focus === "action-items") {
-      // Simple extraction of action items from the summary
-      actionItems = summary
-        .split(/\n+/)
-        .filter(line => {
-          const lowerLine = line.toLowerCase();
-          return (line.trim().startsWith('•') || line.trim().startsWith('-') || line.trim().startsWith('*')) && 
-            (lowerLine.includes('need to') || lowerLine.includes('should') || lowerLine.includes('must') || 
-             lowerLine.includes('action') || lowerLine.includes('task') || lowerLine.includes('todo') ||
-             lowerLine.includes('to-do') || lowerLine.includes('required'));
-        })
-        .map(line => line.replace(/^[•\-\*]\s*/, '').trim());
-    }
-
-    // Prepare the response
-    const response: SummarizeResponse = {
-      summary,
-      ...(keyPoints && keyPoints.length > 0 ? { keyPoints } : {}),
-      ...(actionItems && actionItems.length > 0 ? { actionItems } : {}),
-    };
-
-    return new Response(
-      JSON.stringify(response),
-      {
-        status: 200,
-        headers: {
-          "Content-Type": "application/json"
+    // Extract the summary from the OpenAI response
+    const summary = data.choices[0].message.content;
+    
+    // Process and extract action items or key points if requested
+    let result: SummarizeResponse = { summary };
+    
+    if (focus === 'action-items') {
+      // Extract action items by looking for lists or sections marked as action items
+      const actionItemsRegex = /(?:action items:|actions:|to-do:|todo:)([\s\S]+?)(?=\n\n|\n\w+:|\n*$)/i;
+      const match = summary.match(actionItemsRegex);
+      
+      if (match && match[1]) {
+        // Extract bullet points or numbered items
+        const items = match[1]
+          .split(/\n[-•*]\s*|\n\d+\.\s*/)
+          .filter(item => item.trim().length > 0)
+          .map(item => item.trim());
+          
+        if (items.length > 0) {
+          result.actionItems = items;
         }
       }
-    );
+    } else if (focus === 'key-points') {
+      // Extract key points by looking for lists or sections marked as key points
+      const keyPointsRegex = /(?:key points:|main points:|highlights:|important points:)([\s\S]+?)(?=\n\n|\n\w+:|\n*$)/i;
+      const match = summary.match(keyPointsRegex);
+      
+      if (match && match[1]) {
+        // Extract bullet points or numbered items
+        const items = match[1]
+          .split(/\n[-•*]\s*|\n\d+\.\s*/)
+          .filter(item => item.trim().length > 0)
+          .map(item => item.trim());
+          
+        if (items.length > 0) {
+          result.keyPoints = items;
+        }
+      }
+    }
+
+    return new Response(JSON.stringify(result), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+
   } catch (error) {
-    console.error("Error in summarize API:", error);
-    
+    console.error('Error in summarize API:', error);
     return new Response(
-      JSON.stringify({ 
-        error: error instanceof Error ? error.message : "An unknown error occurred" 
-      }),
-      {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json"
-        }
-      }
+      JSON.stringify({ error: error instanceof Error ? error.message : 'An unexpected error occurred' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 }
-
-export const config = {
-  runtime: "edge",
-};
