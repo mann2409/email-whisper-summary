@@ -1,3 +1,4 @@
+
 {
   "version": 2,
   "builds": [
@@ -23,8 +24,12 @@
       }
     },
     {
+      "handle": "filesystem"
+    },
+    {
       "src": "/(.*)",
-      "dest": "/dist/$1"
+      "dest": "/dist/index.html",
+      "status": 200
     }
   ]
 }
