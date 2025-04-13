@@ -1,17 +1,21 @@
 
 // This file connects the frontend to the serverless API function
-// The API handler is hosted by Vercel as a serverless function
 export default async function handler(req: any, res: any) {
-  // This is just a proxy to connect to the proper endpoint
-  // In production, this file won't be used as requests go directly to the serverless function
-  const url = process.env.NODE_ENV === 'development' 
+  // In production, API requests go directly to the serverless function
+  // This is only used in development as a proxy
+  const apiUrl = process.env.NODE_ENV === 'development' 
     ? 'http://localhost:3000/api/summarize' 
     : '/api/summarize';
   
   try {
-    const response = await fetch(url, {
+    console.log("Proxying request to API:", apiUrl);
+    
+    const response = await fetch(apiUrl, {
       method: req.method,
-      headers: req.headers,
+      headers: {
+        'Content-Type': 'application/json',
+        ...req.headers
+      },
       body: JSON.stringify(req.body)
     });
     

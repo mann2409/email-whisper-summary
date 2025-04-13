@@ -2,23 +2,7 @@
 import { SummarizeRequest, SummarizeResponse } from '../../lib/types';
 import { OPENAI_MODEL } from '../../lib/config';
 
-// Define our own request and response types instead of using Next.js types
-interface VercelRequest {
-  method: string;
-  body: any;
-  headers: {
-    [key: string]: string | string[] | undefined;
-  };
-}
-
-interface VercelResponse {
-  status: (code: number) => VercelResponse;
-  json: (data: any) => void;
-  end: () => void;
-  setHeader: (name: string, value: string) => VercelResponse;
-}
-
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: any, res: any) {
   // Set CORS headers for all responses
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -78,7 +62,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     console.log("Calling OpenAI API with email content length:", emailContent.length);
-    console.log("Using API key starting with:", apiKey.substring(0, 3) + "..." + apiKey.substring(apiKey.length - 3));
+    console.log("Using OpenAI API key (first and last 3 chars):", apiKey.substring(0, 3) + "..." + apiKey.substring(apiKey.length - 3));
 
     // Call OpenAI API
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
