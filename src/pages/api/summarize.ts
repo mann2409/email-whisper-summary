@@ -2,26 +2,31 @@
 import { SummarizeRequest, SummarizeResponse } from '../../lib/types';
 import { OPENAI_MODEL } from '../../lib/config';
 
-export async function POST(request: Request) {
+export default async function handler(req, res) {
+  // Handle CORS preflight request
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
+  // Only allow POST requests
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
   try {
     // Extract the API key from the Authorization header
-    const apiKey = request.headers.get('Authorization')?.replace('Bearer ', '');
+    const apiKey = req.headers.authorization?.replace('Bearer ', '');
 
     if (!apiKey) {
-      return new Response(
-        JSON.stringify({ error: 'OpenAI API key is required' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
+      return res.status(401).json({ error: 'OpenAI API key is required' });
     }
 
     // Parse the request body
-    const { emailContent, options = {} } = await request.json() as SummarizeRequest;
+    const { emailContent, options = {} } = req.body as SummarizeRequest;
 
     if (!emailContent) {
-      return new Response(
-        JSON.stringify({ error: 'Email content is required' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+      return res.status(400).json({ error: 'Email content is required' });
     }
 
     // Construct the prompt based on options
@@ -69,12 +74,9 @@ export async function POST(request: Request) {
 
     if (!response.ok) {
       const errorData = await response.json();
-      return new Response(
-        JSON.stringify({ 
-          error: errorData.error?.message || 'Failed to summarize email' 
-        }),
-        { status: response.status, headers: { 'Content-Type': 'application/json' } }
-      );
+      return res.status(response.status).json({ 
+        error: errorData.error?.message || 'Failed to summarize email' 
+      });
     }
 
     const data = await response.json();
@@ -119,15 +121,11 @@ export async function POST(request: Request) {
       }
     }
 
-    return new Response(JSON.stringify(result), {
-      headers: { 'Content-Type': 'application/json' }
-    });
-
+    return res.status(200).json(result);
   } catch (error) {
     console.error('Error in summarize API:', error);
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'An unexpected error occurred' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return res.status(500).json({ 
+      error: error instanceof Error ? error.message : 'An unexpected error occurred' 
+    });
   }
 }

@@ -23,8 +23,18 @@ export async function summarizeEmail(
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to summarize email");
+      const errorText = await response.text();
+      let errorMessage = "Failed to summarize email";
+      
+      try {
+        const errorData = JSON.parse(errorText);
+        errorMessage = errorData.error || errorMessage;
+      } catch (e) {
+        // If the response is not valid JSON, use the text as the error message
+        errorMessage = errorText || errorMessage;
+      }
+      
+      throw new Error(errorMessage);
     }
 
     return await response.json();

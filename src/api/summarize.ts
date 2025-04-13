@@ -1,4 +1,4 @@
 
-import { POST } from "../pages/api/summarize";
+import handler from "../pages/api/summarize";
 
-export { POST };
+export default handler;
