@@ -1,8 +1,9 @@
 
+import type { Request, Response } from 'express';
 import { SummarizeRequest, SummarizeResponse } from '../../lib/types';
 import { OPENAI_MODEL } from '../../lib/config';
 
-export default async function handler(req: any, res: any) {
+export default async function handler(req: Request, res: Response) {
   // Set CORS headers for all responses
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');

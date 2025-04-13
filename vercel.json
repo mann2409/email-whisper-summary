@@ -11,7 +11,10 @@
     },
     {
       "src": "src/pages/api/**/*.ts",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["src/lib/**", "src/types.ts"]
+      }
     }
   ],
   "routes": [

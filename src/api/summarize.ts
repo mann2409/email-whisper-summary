@@ -1,11 +1,8 @@
 
 // This file connects the frontend to the serverless API function
 export default async function handler(req: any, res: any) {
-  // In production, API requests go directly to the serverless function
-  // This is only used in development as a proxy
-  const apiUrl = process.env.NODE_ENV === 'development' 
-    ? 'http://localhost:3000/api/summarize' 
-    : '/api/summarize';
+  // Always use the deployed endpoint
+  const apiUrl = '/api/summarize';
   
   try {
     console.log("Proxying request to API:", apiUrl);
