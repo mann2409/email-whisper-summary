@@ -15,11 +15,11 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Extract the API key from the Authorization header
-    const apiKey = req.headers.authorization?.replace('Bearer ', '');
+    // Get API key from environment variable instead of request header
+    const apiKey = process.env.OPENAI_API_KEY;
 
     if (!apiKey) {
-      return res.status(401).json({ error: 'OpenAI API key is required' });
+      return res.status(500).json({ error: 'OpenAI API key not configured on server' });
     }
 
     // Parse the request body

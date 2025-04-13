@@ -4,7 +4,6 @@ import { EmailInput } from "@/components/EmailInput";
 import { SummaryDisplay } from "@/components/SummaryDisplay";
 import { LoadingIndicator } from "@/components/LoadingIndicator";
 import { SampleEmail } from "@/components/SampleEmail";
-import { ApiKeyInput } from "@/components/ApiKeyInput";
 import { SummarizeRequest, SummarizeResponse } from "@/lib/types";
 import { summarizeEmail } from "@/lib/api";
 import { toast } from "sonner";
@@ -19,15 +18,6 @@ const Index = () => {
     setIsLoading(true);
     
     try {
-      // Check for API key in local storage
-      const apiKey = localStorage.getItem("openai_api_key");
-      
-      if (!apiKey) {
-        toast.error("Please enter your OpenAI API key first");
-        setIsLoading(false);
-        return;
-      }
-      
       // Create the request
       const request: SummarizeRequest = {
         emailContent: content,
@@ -77,8 +67,6 @@ const Index = () => {
             Instantly transform lengthy emails into clear, concise summaries
           </p>
         </div>
-
-        <ApiKeyInput />
 
         {isLoading ? (
           <LoadingIndicator />
