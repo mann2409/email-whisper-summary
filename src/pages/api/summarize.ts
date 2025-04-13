@@ -24,6 +24,12 @@ export default async function handler(req: any, res: any) {
     // Get API key from environment variable
     const apiKey = process.env.OPENAI_API_KEY;
 
+    console.log("API Key Environment Variable Check:");
+    console.log("API Key exists:", !!apiKey);
+    console.log("API Key length:", apiKey?.length);
+    console.log("API Key first 3 chars:", apiKey?.substring(0, 3));
+    console.log("API Key last 3 chars:", apiKey?.slice(-3));
+
     if (!apiKey) {
       console.error("OpenAI API key is missing");
       return res.status(500).json({ error: 'OpenAI API key not configured. Please set the OPENAI_API_KEY environment variable.' });
