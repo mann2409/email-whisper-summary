@@ -1,9 +1,24 @@
 
-import { NextApiRequest, NextApiResponse } from 'next';
 import { SummarizeRequest, SummarizeResponse } from '../../lib/types';
 import { OPENAI_MODEL } from '../../lib/config';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+// Define our own request and response types instead of using Next.js types
+interface VercelRequest {
+  method: string;
+  body: any;
+  headers: {
+    [key: string]: string | string[] | undefined;
+  };
+}
+
+interface VercelResponse {
+  status: (code: number) => VercelResponse;
+  json: (data: any) => void;
+  end: () => void;
+  setHeader: (name: string, value: string) => VercelResponse;
+}
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
     res.status(200).end();
