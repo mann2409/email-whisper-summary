@@ -41,11 +41,13 @@ export default async function handler(req: any) {
       temperature: body.temperature || 0.3,
       max_tokens: body.max_tokens || 500
     } : null;
+
+    const requestBody = process.env.NODE_ENV === 'production' ? apiRequest : body;
     
     const response = await fetch(apiUrl, {
       method: "POST",
       headers,
-      body: JSON.stringify(process.env.NODE_ENV === 'production' ? apiRequest : body),
+      body: JSON.stringify(requestBody),
     });
     
     console.log("API response status:", response.status);
