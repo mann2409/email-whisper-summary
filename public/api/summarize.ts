@@ -1,5 +1,6 @@
 
 // This file connects the frontend to the serverless API function
+import type { VercelRequest, VercelResponse } from '@vercel/node'; // Optional but recommended
 
 export default async function handler(req: any) {
   // For Vite deployed apps, we'll use a direct API URL
