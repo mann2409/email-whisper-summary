@@ -31,10 +31,18 @@ export default async function handler(req: any) {
       };
     }
     
+    // Create a proper apiRequest for OpenAI format if in production
+    const apiRequest = process.env.NODE_ENV === 'production' ? {
+      model: body.model || 'gpt-4o-mini',
+      messages: body.messages || [],
+      temperature: body.temperature || 0.3,
+      max_tokens: body.max_tokens || 500
+    } : null;
+    
     const response = await fetch(apiUrl, {
       method: "POST",
       headers,
-      body: JSON.stringify(process.env.NODE_ENV === 'production' ? apiRequest : request),
+      body: JSON.stringify(process.env.NODE_ENV === 'production' ? apiRequest : body),
     });
     
     console.log("API response status:", response.status);
