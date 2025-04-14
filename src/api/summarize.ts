@@ -21,9 +21,12 @@ export default async function handler(req: any) {
     
     if (process.env.NODE_ENV === 'production') {
       // In production, add the OpenAI API key header
-      const apiKey = import.meta.env.VITE_OPENAI_API_KEY || '';
+      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
       console.log("API Key exists:", !!apiKey);
-      console.log("API Key length:", apiKey?.length);
+      
+      if (!apiKey) {
+        throw new Error("OpenAI API key not configured. Please set the VITE_OPENAI_API_KEY environment variable.");
+      }
       
       headers = {
         ...headers,
@@ -69,7 +72,7 @@ export default async function handler(req: any) {
   } catch (error) {
     console.error('Error forwarding to API:', error);
     return {
-      error: 'Failed to connect to API endpoint'
+      error: error instanceof Error ? error.message : 'Failed to connect to API endpoint'
     };
   }
 }

@@ -8,6 +8,14 @@ export async function summarizeEmail(
   try {
     console.log("Making API request to:", API_ENDPOINT);
     
+    // Check for API key in production
+    if (process.env.NODE_ENV === 'production') {
+      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+      if (!apiKey) {
+        throw new Error("OpenAI API key not configured. Please set the VITE_OPENAI_API_KEY environment variable.");
+      }
+    }
+    
     // Prepare the request for OpenAI
     const apiRequest = process.env.NODE_ENV === 'production' ? {
       model: OPENAI_MODEL,
@@ -61,6 +69,10 @@ export async function summarizeEmail(
     if (process.env.NODE_ENV === 'production') {
       const result = await response.json();
       console.log("OpenAI response successful");
+      
+      if (!result.choices || result.choices.length === 0) {
+        throw new Error("Invalid response format from OpenAI API");
+      }
       
       const summary = result.choices[0].message.content;
       
