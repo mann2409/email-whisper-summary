@@ -18,10 +18,13 @@ const Index = () => {
     setIsLoading(true);
     
     // Check for API key in production
-    if (process.env.NODE_ENV === 'production' && !import.meta.env.VITE_OPENAI_API_KEY) {
-      toast.error("OpenAI API key is required. Please set the VITE_OPENAI_API_KEY environment variable in your deployment.");
-      setIsLoading(false);
-      return;
+    if (process.env.NODE_ENV === 'production') {
+      const apiKey = import.meta.env.VITE_OPENAI_API_KEY || import.meta.env.OPENAI_API_KEY;
+      if (!apiKey) {
+        toast.error("OpenAI API key is required. Please set either OPENAI_API_KEY or VITE_OPENAI_API_KEY environment variable in your Vercel deployment.");
+        setIsLoading(false);
+        return;
+      }
     }
     
     try {
@@ -91,7 +94,7 @@ const Index = () => {
         <p>Powered by OpenAI • Deployed on Vercel</p>
         {process.env.NODE_ENV === 'production' && (
           <p className="mt-2 text-xs">
-            Note: This app requires an OpenAI API key. Set VITE_OPENAI_API_KEY in your Vercel deployment.
+            Note: This app requires an OpenAI API key. Set OPENAI_API_KEY in your Vercel deployment.
           </p>
         )}
       </footer>

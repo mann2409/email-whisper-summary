@@ -10,9 +10,10 @@ export async function summarizeEmail(
     
     // Check for API key in production
     if (process.env.NODE_ENV === 'production') {
-      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+      // Try both environment variables
+      const apiKey = import.meta.env.VITE_OPENAI_API_KEY || import.meta.env.OPENAI_API_KEY;
       if (!apiKey) {
-        throw new Error("OpenAI API key not configured. Please set the VITE_OPENAI_API_KEY environment variable.");
+        throw new Error("OpenAI API key not configured. Please set the OPENAI_API_KEY environment variable in Vercel.");
       }
     }
     

@@ -28,7 +28,7 @@ export default defineConfig(({ mode }) => ({
   // Make environment variables available to client-side code
   define: {
     'process.env.NODE_ENV': JSON.stringify(mode),
-    // Vite automatically exposes import.meta.env.VITE_* variables
-    // No need to manually define them here
+    // Expose environment variables via import.meta.env
+    // No need to manually define them here as Vite automatically exposes VITE_* variables
   }
 }));
