@@ -27,26 +27,13 @@ export default async function handler(req: any) {
         typeof body.emailContent === 'string' ? body.emailContent.length : 'N/A');
     } else {
       console.error("Missing emailContent in body");
+      return { error: "Email content is required" };
     }
     
-    // Check if messages exist (for OpenAI format)
-    if (body.messages) {
-      console.log("Messages array exists with length:", body.messages.length);
-      body.messages.forEach((msg: any, idx: number) => {
-        console.log(`Message ${idx} role:`, msg.role);
-        console.log(`Message ${idx} content length:`, msg.content?.length || 0);
-      });
-    } else {
-      console.log("No messages array in request body");
-    }
-    
-    // Check if we're in production with a direct OpenAI call
-    if (process.env.NODE_ENV === 'production') {
-      // Validate that we have email content
-      if (!body.emailContent && (!body.messages || !body.messages.length)) {
-        console.error("Missing email content in request");
-        return { error: "Email content is required" };
-      }
+    // Validate the email content
+    if (!body.emailContent || body.emailContent.trim() === '') {
+      console.error("Email content is empty or whitespace only");
+      return { error: "Email content is required" };
     }
     
     // For production, we'll need the API key
@@ -70,28 +57,48 @@ export default async function handler(req: any) {
     }
     
     // Create a proper apiRequest for OpenAI format if in production
-    const apiRequest = process.env.NODE_ENV === 'production' ? {
-      model: body.model || 'gpt-4o-mini',
-      messages: body.messages || [],
-      temperature: body.temperature || 0.3,
-      max_tokens: body.max_tokens || 500
-    } : null;
-
-    const requestBody = process.env.NODE_ENV === 'production' ? apiRequest : body;
+    let requestBody;
     
-    // Log the actual request body being sent, with sensitive data redacted
+    if (process.env.NODE_ENV === 'production') {
+      // Format request for OpenAI API
+      const options = body.options || {};
+      
+      const systemPrompt = `You are an AI email summarizer. Summarize the following email content ${
+        options.length === 'short' ? 'in 1-2 sentences' : 
+        options.length === 'medium' ? 'in 3-4 sentences' : 
+        'with more detail'
+      }. ${
+        options.focus === 'action-items' ? 'Focus on action items required. Include a list of action items at the end.' : 
+        options.focus === 'key-points' ? 'Focus on key points. Include a list of key points at the end.' : 
+        'Provide a general focus.'
+      }`;
+      
+      requestBody = {
+        model: body.model || 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: body.emailContent.trim() }
+        ],
+        temperature: body.temperature || 0.3,
+        max_tokens: body.max_tokens || 500
+      };
+      
+      console.log("Formatted OpenAI request with system prompt:", systemPrompt);
+    } else {
+      // Use body as is for dev environment
+      requestBody = body;
+    }
+    
+    // Log the actual request body being sent
     console.log("Sending request to API with body structure:", 
       requestBody ? Object.keys(requestBody) : "No request body");
     
-    if (requestBody && requestBody.messages) {
+    if (process.env.NODE_ENV === 'production' && requestBody.messages) {
       console.log("Messages count:", requestBody.messages.length);
-      for (let i = 0; i < requestBody.messages.length; i++) {
-        console.log(`Message ${i} role:`, requestBody.messages[i].role);
-        console.log(`Message ${i} content first 50 chars:`, 
-          requestBody.messages[i].content?.substring(0, 50) + '...' || 'No content');
-        console.log(`Message ${i} content length:`, 
-          requestBody.messages[i].content?.length || 0);
-      }
+      console.log("System prompt:", requestBody.messages[0].content);
+      console.log("User content length:", requestBody.messages[1].content.length);
+      console.log("User content first 100 chars:", 
+        requestBody.messages[1].content.substring(0, 100) + '...');
     }
     
     const response = await fetch(apiUrl, {
@@ -120,6 +127,22 @@ export default async function handler(req: any) {
     }
 
     const data = await response.json();
+    
+    // For production, format OpenAI response
+    if (process.env.NODE_ENV === 'production') {
+      if (!data.choices || data.choices.length === 0) {
+        throw new Error("Invalid response format from OpenAI API");
+      }
+      
+      const summary = data.choices[0].message.content;
+      
+      // Format the response in the expected structure
+      return {
+        summary,
+        // Additional extracting of action items or key points could be done here
+      };
+    }
+    
     return data;
   } catch (error) {
     console.error('Error forwarding to API:', error);

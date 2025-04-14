@@ -14,6 +14,12 @@ const Index = () => {
   const [summary, setSummary] = useState<SummarizeResponse | null>(null);
 
   const handleSubmit = async (content: string, options: { length: string; focus: string }) => {
+    // Validate content before proceeding
+    if (!content || content.trim() === '') {
+      toast.error("Email content is required");
+      return;
+    }
+    
     setEmailContent(content);
     setIsLoading(true);
     
@@ -34,9 +40,9 @@ const Index = () => {
     }
     
     try {
-      // Create the request
+      // Create the request with trimmed content
       const request: SummarizeRequest = {
-        emailContent: content,
+        emailContent: content.trim(),
         options: {
           length: options.length as "short" | "medium" | "long",
           focus: options.focus as "general" | "action-items" | "key-points",
@@ -45,6 +51,7 @@ const Index = () => {
       
       console.log("Index.tsx - Request object created with keys:", Object.keys(request));
       console.log("Index.tsx - Email content length in request:", request.emailContent.length);
+      console.log("Index.tsx - Email content type:", typeof request.emailContent);
       
       // Make the API call
       const result = await summarizeEmail(request);
