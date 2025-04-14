@@ -22,7 +22,14 @@ export function EmailInput({ onSubmit, isLoading }: EmailInputProps) {
     // Trim the content and check if it's not empty
     const trimmedContent = emailContent.trim();
     if (trimmedContent) {
-      console.log("Submitting email content:", trimmedContent.substring(0, 50) + "...");
+      console.log("Submitting email content from form. First 100 chars:", 
+        trimmedContent.substring(0, 100) + "...");
+      console.log("Email content total length:", trimmedContent.length);
+      console.log("Email content type:", typeof trimmedContent);
+      
+      // Log options being submitted
+      console.log("Submitting with options:", { length, focus });
+      
       onSubmit(trimmedContent, { 
         length: length as "short" | "medium" | "long", 
         focus: focus as "general" | "action-items" | "key-points" 
@@ -34,8 +41,14 @@ export function EmailInput({ onSubmit, isLoading }: EmailInputProps) {
 
   const handlePaste = (e: React.ClipboardEvent) => {
     const pasteData = e.clipboardData.getData("text");
+    console.log("Paste detected! Content length:", pasteData.length);
+    console.log("First 50 chars of pasted content:", pasteData.substring(0, 50) + "...");
     setEmailContent(pasteData);
-    console.log("Pasted content length:", pasteData.length);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setEmailContent(e.target.value);
+    console.log("Email content changed. Current length:", e.target.value.length);
   };
 
   return (
@@ -51,7 +64,7 @@ export function EmailInput({ onSubmit, isLoading }: EmailInputProps) {
               id="email-content"
               placeholder="Paste your email content here..."
               value={emailContent}
-              onChange={(e) => setEmailContent(e.target.value)}
+              onChange={handleChange}
               onPaste={handlePaste}
               className="min-h-[200px] resize-none"
               required

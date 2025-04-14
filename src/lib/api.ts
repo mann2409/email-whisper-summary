@@ -7,10 +7,14 @@ export async function summarizeEmail(
 ): Promise<SummarizeResponse> {
   try {
     console.log("Making API request to:", API_ENDPOINT);
+    console.log("Email content:", request.emailContent ? request.emailContent.substring(0, 100) + '...' : 'NULL');
     console.log("Email content length:", request.emailContent?.length);
+    console.log("Request object keys:", Object.keys(request));
+    console.log("Request options:", request.options);
     
     // Validate email content
     if (!request.emailContent || request.emailContent.trim() === '') {
+      console.error("Email content validation failed: empty or missing");
       throw new Error("Email content is required");
     }
     
@@ -49,8 +53,16 @@ export async function summarizeEmail(
       mode: process.env.NODE_ENV,
       endpoint: API_ENDPOINT,
       model: process.env.NODE_ENV === 'production' ? OPENAI_MODEL : 'N/A',
-      contentLength: request.emailContent.length
+      contentLength: request.emailContent.length,
+      apiRequestType: typeof apiRequest
     });
+    
+    // Log the message content if in production
+    if (process.env.NODE_ENV === 'production' && apiRequest.messages) {
+      console.log("System prompt:", apiRequest.messages[0].content);
+      console.log("User message (first 100 chars):", 
+        apiRequest.messages[1].content.substring(0, 100) + '...');
+    }
 
     const response = await fetch(API_ENDPOINT, {
       method: "POST",

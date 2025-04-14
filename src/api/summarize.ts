@@ -10,10 +10,35 @@ export default async function handler(req: any) {
   
   try {
     console.log("Making direct request to API:", apiUrl);
+    console.log("Request method:", req.method);
+    console.log("Request headers:", req.headers ? Object.keys(req.headers) : "No headers");
     
     // Get the request body
     const body = req.body || {};
     console.log("Request body structure:", Object.keys(body));
+    
+    // Log the email content if it exists
+    if (body.emailContent) {
+      console.log("Email content first 100 chars:", 
+        typeof body.emailContent === 'string' 
+          ? body.emailContent.substring(0, 100) + '...' 
+          : 'Not a string');
+      console.log("Email content length:", 
+        typeof body.emailContent === 'string' ? body.emailContent.length : 'N/A');
+    } else {
+      console.error("Missing emailContent in body");
+    }
+    
+    // Check if messages exist (for OpenAI format)
+    if (body.messages) {
+      console.log("Messages array exists with length:", body.messages.length);
+      body.messages.forEach((msg: any, idx: number) => {
+        console.log(`Message ${idx} role:`, msg.role);
+        console.log(`Message ${idx} content length:`, msg.content?.length || 0);
+      });
+    } else {
+      console.log("No messages array in request body");
+    }
     
     // Check if we're in production with a direct OpenAI call
     if (process.env.NODE_ENV === 'production') {
@@ -60,8 +85,13 @@ export default async function handler(req: any) {
     
     if (requestBody && requestBody.messages) {
       console.log("Messages count:", requestBody.messages.length);
-      console.log("Last message content length:", 
-        requestBody.messages[requestBody.messages.length - 1]?.content?.length || 0);
+      for (let i = 0; i < requestBody.messages.length; i++) {
+        console.log(`Message ${i} role:`, requestBody.messages[i].role);
+        console.log(`Message ${i} content first 50 chars:`, 
+          requestBody.messages[i].content?.substring(0, 50) + '...' || 'No content');
+        console.log(`Message ${i} content length:`, 
+          requestBody.messages[i].content?.length || 0);
+      }
     }
     
     const response = await fetch(apiUrl, {

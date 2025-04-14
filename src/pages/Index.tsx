@@ -17,9 +17,15 @@ const Index = () => {
     setEmailContent(content);
     setIsLoading(true);
     
+    console.log("Index.tsx - handleSubmit called with content length:", content.length);
+    console.log("Index.tsx - Content first 100 chars:", content.substring(0, 100) + "...");
+    console.log("Index.tsx - Options:", options);
+    
     // Check for API key in production
     if (process.env.NODE_ENV === 'production') {
       const apiKey = import.meta.env.VITE_OPENAI_API_KEY || import.meta.env.OPENAI_API_KEY;
+      console.log("Index.tsx - API key exists:", !!apiKey);
+      
       if (!apiKey) {
         toast.error("OpenAI API key is required. Please set either OPENAI_API_KEY or VITE_OPENAI_API_KEY environment variable in your Vercel deployment.");
         setIsLoading(false);
@@ -37,8 +43,13 @@ const Index = () => {
         },
       };
       
+      console.log("Index.tsx - Request object created with keys:", Object.keys(request));
+      console.log("Index.tsx - Email content length in request:", request.emailContent.length);
+      
       // Make the API call
       const result = await summarizeEmail(request);
+      
+      console.log("Index.tsx - API call result:", result.error ? "Error: " + result.error : "Success");
       
       if (result.error) {
         toast.error(result.error);
@@ -46,7 +57,7 @@ const Index = () => {
       
       setSummary(result);
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Index.tsx - Error:", error);
       setSummary({
         summary: "",
         error: error instanceof Error ? error.message : "An unknown error occurred",
@@ -63,6 +74,7 @@ const Index = () => {
   };
 
   const handleUseSample = (sampleContent: string) => {
+    console.log("Index.tsx - Using sample email with length:", sampleContent.length);
     setEmailContent(sampleContent);
   };
 
