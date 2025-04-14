@@ -13,6 +13,16 @@ export default async function handler(req: any) {
     
     // Get the request body
     const body = req.body || {};
+    console.log("Request body structure:", Object.keys(body));
+    
+    // Check if we're in production with a direct OpenAI call
+    if (process.env.NODE_ENV === 'production') {
+      // Validate that we have email content
+      if (!body.emailContent && (!body.messages || !body.messages.length)) {
+        console.error("Missing email content in request");
+        return { error: "Email content is required" };
+      }
+    }
     
     // For production, we'll need the API key
     let headers: Record<string, string> = {
@@ -43,6 +53,16 @@ export default async function handler(req: any) {
     } : null;
 
     const requestBody = process.env.NODE_ENV === 'production' ? apiRequest : body;
+    
+    // Log the actual request body being sent, with sensitive data redacted
+    console.log("Sending request to API with body structure:", 
+      requestBody ? Object.keys(requestBody) : "No request body");
+    
+    if (requestBody && requestBody.messages) {
+      console.log("Messages count:", requestBody.messages.length);
+      console.log("Last message content length:", 
+        requestBody.messages[requestBody.messages.length - 1]?.content?.length || 0);
+    }
     
     const response = await fetch(apiUrl, {
       method: "POST",

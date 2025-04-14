@@ -7,6 +7,12 @@ export async function summarizeEmail(
 ): Promise<SummarizeResponse> {
   try {
     console.log("Making API request to:", API_ENDPOINT);
+    console.log("Email content length:", request.emailContent?.length);
+    
+    // Validate email content
+    if (!request.emailContent || request.emailContent.trim() === '') {
+      throw new Error("Email content is required");
+    }
     
     // Check for API key in production
     if (process.env.NODE_ENV === 'production') {
@@ -38,6 +44,13 @@ export async function summarizeEmail(
       temperature: 0.3,
       max_tokens: 500
     } : request;
+
+    console.log("Sending request with configuration:", {
+      mode: process.env.NODE_ENV,
+      endpoint: API_ENDPOINT,
+      model: process.env.NODE_ENV === 'production' ? OPENAI_MODEL : 'N/A',
+      contentLength: request.emailContent.length
+    });
 
     const response = await fetch(API_ENDPOINT, {
       method: "POST",

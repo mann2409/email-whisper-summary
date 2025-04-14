@@ -18,17 +18,24 @@ export function EmailInput({ onSubmit, isLoading }: EmailInputProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (emailContent.trim()) {
-      onSubmit(emailContent, { 
+    
+    // Trim the content and check if it's not empty
+    const trimmedContent = emailContent.trim();
+    if (trimmedContent) {
+      console.log("Submitting email content:", trimmedContent.substring(0, 50) + "...");
+      onSubmit(trimmedContent, { 
         length: length as "short" | "medium" | "long", 
         focus: focus as "general" | "action-items" | "key-points" 
       });
+    } else {
+      console.error("Email content is empty after trimming");
     }
   };
 
   const handlePaste = (e: React.ClipboardEvent) => {
     const pasteData = e.clipboardData.getData("text");
     setEmailContent(pasteData);
+    console.log("Pasted content length:", pasteData.length);
   };
 
   return (
@@ -85,7 +92,7 @@ export function EmailInput({ onSubmit, isLoading }: EmailInputProps) {
         <CardFooter>
           <Button 
             type="submit" 
-            disabled={isLoading || !emailContent.trim()}
+            disabled={isLoading || emailContent.trim().length === 0}
             className="w-full"
           >
             {isLoading ? "Summarizing..." : "Summarize Email"}
