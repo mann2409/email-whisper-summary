@@ -76,8 +76,8 @@ export async function summarizeEmail(
           // Extract bullet points or numbered items
           const items = match[1]
             .split(/\n[-•*]\s*|\n\d+\.\s*/)
-            .filter(item => item.trim().length > 0)
-            .map(item => item.trim());
+            .filter((item: string) => item.trim().length > 0)
+            .map((item: string) => item.trim());
             
           if (items.length > 0) {
             apiResponse.actionItems = items;
@@ -92,8 +92,8 @@ export async function summarizeEmail(
           // Extract bullet points or numbered items
           const items = match[1]
             .split(/\n[-•*]\s*|\n\d+\.\s*/)
-            .filter(item => item.trim().length > 0)
-            .map(item => item.trim());
+            .filter((item: string) => item.trim().length > 0)
+            .map((item: string) => item.trim());
             
           if (items.length > 0) {
             apiResponse.keyPoints = items;

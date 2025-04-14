@@ -15,7 +15,7 @@ export default async function handler(req: any) {
     const body = req.body || {};
     
     // For production, we'll need the API key
-    let headers = {
+    let headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
     
@@ -32,11 +32,30 @@ export default async function handler(req: any) {
     }
     
     const response = await fetch(apiUrl, {
-      method: 'POST',
+      method: "POST",
       headers,
-      body: JSON.stringify(body)
+      body: JSON.stringify(process.env.NODE_ENV === 'production' ? apiRequest : request),
     });
     
+    console.log("API response status:", response.status);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("API error response:", errorText);
+      
+      let errorMessage = "Failed to summarize email";
+      
+      try {
+        const errorData = JSON.parse(errorText);
+        errorMessage = errorData.error || errorMessage;
+      } catch (e) {
+        // If the response is not valid JSON, use the text as the error message
+        errorMessage = errorText || errorMessage;
+      }
+      
+      throw new Error(errorMessage);
+    }
+
     const data = await response.json();
     return data;
   } catch (error) {

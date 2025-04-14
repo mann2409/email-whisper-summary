@@ -107,7 +107,7 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    const data = await response.json();
+    const data = await response.json() as any;
     console.log("OpenAI API responded successfully");
     
     // Extract the summary from the OpenAI response
@@ -125,8 +125,8 @@ export default async function handler(req: any, res: any) {
         // Extract bullet points or numbered items
         const items = match[1]
           .split(/\n[-•*]\s*|\n\d+\.\s*/)
-          .filter(item => item.trim().length > 0)
-          .map(item => item.trim());
+          .filter((item: string) => item.trim().length > 0)
+          .map((item: string) => item.trim());
           
         if (items.length > 0) {
           result.actionItems = items;
@@ -141,8 +141,8 @@ export default async function handler(req: any, res: any) {
         // Extract bullet points or numbered items
         const items = match[1]
           .split(/\n[-•*]\s*|\n\d+\.\s*/)
-          .filter(item => item.trim().length > 0)
-          .map(item => item.trim());
+          .filter((item: string) => item.trim().length > 0)
+          .map((item: string) => item.trim());
           
         if (items.length > 0) {
           result.keyPoints = items;
