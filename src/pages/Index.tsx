@@ -17,6 +17,13 @@ const Index = () => {
     setEmailContent(content);
     setIsLoading(true);
     
+    // Check for API key in production
+    if (process.env.NODE_ENV === 'production' && !import.meta.env.VITE_OPENAI_API_KEY) {
+      toast.error("OpenAI API key is required. Please set the VITE_OPENAI_API_KEY environment variable in your deployment.");
+      setIsLoading(false);
+      return;
+    }
+    
     try {
       // Create the request
       const request: SummarizeRequest = {
@@ -82,6 +89,11 @@ const Index = () => {
       
       <footer className="py-6 text-center text-sm text-slate-500 dark:text-slate-400">
         <p>Powered by OpenAI • Deployed on Vercel</p>
+        {process.env.NODE_ENV === 'production' && (
+          <p className="mt-2 text-xs">
+            Note: This app requires an OpenAI API key. Set VITE_OPENAI_API_KEY in your Vercel deployment.
+          </p>
+        )}
       </footer>
     </div>
   );
